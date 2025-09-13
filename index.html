@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>📋 Ver Pedidos</title>
+  <title>📋 Ver y Editar Pedidos</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
@@ -14,6 +14,18 @@
     .productos { margin-left: 20px; color: #333; }
     .productos li { margin-bottom: 5px; }
     .header { font-weight: bold; margin-bottom: 6px; }
+    .editarForm { margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 6px; display: none; }
+    .editarForm input, .editarForm select {
+      margin: 4px 0; padding: 6px; width: 100%;
+    }
+    .editarForm button {
+      margin-top: 5px; background: #28a745; color: #fff;
+      border: none; padding: 8px; border-radius: 6px; cursor: pointer;
+    }
+    .btnEditar {
+      background: #007bff; color: white; border: none;
+      padding: 6px 10px; border-radius: 6px; cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -23,12 +35,11 @@
   <script>
     // 🔹 Conexión a Supabase
     const supabase = window.supabase.createClient(
-      "https://cvpbtjlupswbyxenugpz.supabase.co",  // 👉 tu URL
+      "https://cvpbtjlupswbyxenugpz.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
     );
 
     async function cargarPedidos() {
-      // Traer pedidos
       const { data: pedidos, error } = await supabase
         .from("pedidos")
         .select("*")
@@ -43,13 +54,11 @@
       lista.innerHTML = "";
 
       for (let p of pedidos) {
-        // Traer detalles de cada pedido
         const { data: detalles } = await supabase
           .from("pedido_detalles")
           .select("*")
           .eq("pedido_id", p.folio);
 
-        // Crear tarjeta de pedido
         const card = document.createElement("div");
         card.className = "card";
         card.innerHTML = `
@@ -67,8 +76,58 @@
               : "<li>Sin productos</li>"
             }
           </ul>
+          <button class="btnEditar" onclick="mostrarEdicion(${p.folio})">✏️ Editar</button>
+          <form id="form-${p.folio}" class="editarForm" onsubmit="guardarEdicion(event, ${p.folio})">
+            <input type="number" step="0.01" name="cantidad" placeholder="Cantidad global" value="${p.cantidad}">
+            <input type="number" step="0.01" name="total" placeholder="Total" value="${p.total}">
+            <select name="pago">
+              <option value="pendiente" ${p.pago === "pendiente" ? "selected" : ""}>pendiente</option>
+              <option value="efectivo" ${p.pago === "efectivo" ? "selected" : ""}>efectivo</option>
+              <option value="tarjeta" ${p.pago === "tarjeta" ? "selected" : ""}>tarjeta</option>
+              <option value="transferencia" ${p.pago === "transferencia" ? "selected" : ""}>transferencia</option>
+              <option value="remision" ${p.pago === "remision" ? "selected" : ""}>remision</option>
+              <option value="factura" ${p.pago === "factura" ? "selected" : ""}>factura</option>
+              <option value="credito" ${p.pago === "credito" ? "selected" : ""}>credito</option>
+            </select>
+            <select name="chofer">
+              <option value="pendiente" ${p.chofer === "pendiente" ? "selected" : ""}>pendiente</option>
+              <option value="pedro damian elizondo irachetay" ${p.chofer === "pedro damian elizondo irachetay" ? "selected" : ""}>pedro damian elizondo irachetay</option>
+              <option value="sergio becerra maravilla" ${p.chofer === "sergio becerra maravilla" ? "selected" : ""}>sergio becerra maravilla</option>
+            </select>
+            <input type="text" name="libre" placeholder="Dato libre" value="${p.libre || ""}">
+            <button type="submit">💾 Guardar cambios</button>
+          </form>
         `;
         lista.appendChild(card);
+      }
+    }
+
+    // Mostrar formulario de edición
+    function mostrarEdicion(folio) {
+      const form = document.getElementById(`form-${folio}`);
+      form.style.display = form.style.display === "none" ? "block" : "none";
+    }
+
+    // Guardar cambios en Supabase
+    async function guardarEdicion(e, folio) {
+      e.preventDefault();
+      const form = e.target;
+
+      const cantidad = parseFloat(form.cantidad.value) || 0;
+      const total = parseFloat(form.total.value) || 0;
+      const pago = form.pago.value;
+      const chofer = form.chofer.value;
+      const libre = form.libre.value;
+
+      const { error } = await supabase.from("pedidos")
+        .update({ cantidad, total, pago, chofer, libre })
+        .eq("folio", folio);
+
+      if (error) {
+        alert("❌ Error al actualizar: " + error.message);
+      } else {
+        alert("✅ Pedido actualizado");
+        cargarPedidos();
       }
     }
 
