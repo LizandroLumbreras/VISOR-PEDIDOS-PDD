@@ -64,11 +64,10 @@
         card.innerHTML = `
           <div class="header">Pedido #${p.folio} – Cliente: ${p.cliente}</div>
           <p><b>Fecha:</b> ${new Date(p.fecha).toLocaleString()}</p>
-          <p><b>Cantidad global:</b> ${p.cantidad}</p>
           <p><b>Total:</b> $${p.total}</p>
           <p><b>Forma de pago:</b> ${p.pago}</p>
           <p><b>Chofer:</b> ${p.chofer}</p>
-          <p><b>Dato libre:</b> ${p.libre || "-"}</p>
+          <p><b>Notas:</b> ${p.libre || "-"}</p>
           <p><b>Productos:</b></p>
           <ul class="productos">
             ${detalles && detalles.length > 0
@@ -78,7 +77,6 @@
           </ul>
           <button class="btnEditar" onclick="mostrarEdicion(${p.folio})">✏️ Editar</button>
           <form id="form-${p.folio}" class="editarForm" onsubmit="guardarEdicion(event, ${p.folio})">
-            <input type="number" step="0.01" name="cantidad" placeholder="Cantidad global" value="${p.cantidad}">
             <input type="number" step="0.01" name="total" placeholder="Total" value="${p.total}">
             <select name="pago">
               <option value="pendiente" ${p.pago === "pendiente" ? "selected" : ""}>pendiente</option>
